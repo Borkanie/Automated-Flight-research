@@ -1,36 +1,37 @@
-\documentclass[twocolumn,showpacs,
-    nofootinbib,aps,superscriptaddress,
-    eqsecnum,prd,showkeys,10pt,floatfix]{revtex4}
-\setlength{\paperheight}{11in}
-\usepackage{amssymb}
-\usepackage{amsmath}
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
 \usepackage{graphicx}
-\usepackage{dcolumn}
-\usepackage{hyperref}
-% Keywords command
-\providecommand{\keywords}[1]
-{
-    \small
-    \textbf{\textit{Keywords---}} #1
-}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
-\begin{titlepage}
-    \title{An optimal linear approach to cruise controlling a fixed-wing aircraft in the presence of wind}
-    \author{Bogdan I Boboc, Eva H Dulf}
-    \affiliation{Faculty of Automation and Computer Science, department of Automation and Applied Informatics, Technical University of Cluj-Napoca, Romania}
 
-    \begin{abstract}
-        Linear Gaussian control (LQG) is a well suited control strategy when it comes to stabilize systems under a fixed set of operating conditions around an equilibrium point.
-        It provides a great mechanism to ensure a stability margin for any real system with a high degree of non-linearity.
-        It has been successfully used in conjugation with a system composed of states defined in different scales.
-        This paper aims to develop a control strategy for a fixed wing aircraft which operates in windy conditions at a cruise altitude, focusing on the case of a small scale Unmanned Aerial vehicle (UAV) with no access to any wind sensors, thus relying on an estimator to identify the wind's intensity and direction.
-        This approach seems really promising especially when paired with a gain-scheduling mechanism.
-    \end{abstract}
-    \keywords{Autopilot, Linear Quadratic Control, Aerospace, Fixed-Wing Aircraft}
-    \maketitle
-\end{titlepage}
-\newpage
+\title{An optimal linear approach to cruise controlling a fixed-wing aircraft in the presence of wind}
 
+\author{
+\IEEEauthorblockN{1\textsuperscript{st} Eva H Dulf}
+\textit{Technical University of Cluj-Napoca}\\
+Cluj-Napoca, Romania \\
+eva.dulf@campus.utcluj.ro
+\and
+\IEEEauthorblockN{2\textsuperscript{st} Bogdan I Boboc}
+\textit{Technical University of Cluj-Napoca}\\
+Cluj-Napoca, Romania \\
+eboboc.mi.bogdan@student.utcluj.ro}
+\maketitle
+
+\begin{abstract}
+    This article presents simple implementation of a fully automated path following controller for a fixed wing aircraft, even when faced with strong windy disturbances. The design of the controller follows an optimal controll approach with a predefined cost function taking into account the desired trajectory. It aims to follow a given path while minimizing acceleration and conserving energy as much as possible. It uses an extended state matrix to approximate the atmosphering winds, in order to allow implementationon smaller devices. The goal of the controller is to ensure path following even in the presance of disturbances while providing a robust implementation that allows cheap production with decent results. For this it makes use of Linear Gaussian control (LQG), which is a well suited control strategy when it comes to stabilize systems under a fixed set of operating conditions around an equilibrium point. This paper proposes an optimal control strategy for a fixed wing aircraft which operates in windy conditions at a cruise altitude, focusing on the case of a small scale Unmanned Aerial vehicle (UAV) with no access to any wind sensors, thus relying on an estimator to identify the wind's intensity and direction.
+\end{abstract}
+
+\begin{IEEEkeywords}
+    Fixed-wing; path-following; UAV;optimal control;
+\end{IEEEkeywords}
 
 %%%        S  S    E  E E        C     T T T T T    0       O       N        N
 %%%     S          E           C           T        I     O   O     N  N     N
@@ -38,6 +39,23 @@
 %%%           S    E           C           T        I     O   O     N      N N
 %%%     S S        E  E  E       C         T        I       O       N        N
 \section{Introduction}
+The relevance of unmanned aerial vehicles is on the rising in the recent years.
+They have been succesfully used in different applications raging from surveillance and reconnaissance to agricultural endevours and rescue operation. There hase been a rising interest, in the recent years, in fixed-wing UAV's over quadrotors in remote sensing applications.
+This has come mainly to the increase range difference, and speed. 
+While quadrotors provide better manuverability the wings of fixed-wing aircraft allow for a lot less energy consumption for the same flight direction. The biggest breaktrough have been made in terms of control,\cite{A full controller for a fixed-wing UAV}\cite{Optimal Path Following for Small Fixed-Wing UAVs Under Wind Disturbances} and of flight range, imbodied by the trasition to solar powered UAV's\cite{Electric aircraft - present and futur}\cite{Electric aviation: A review of concepts and enabling technologies}.
+\subsection{Literature review}
+Currently multiple approaches have been implemented when it comes to controlling an aircraft. Linear controller, like the one researched in this paper, provide a stable approach for a low calculating cost like\cite{Linear}. Backstepping tehniques, based on Lyapunov analysis come at the cost of more calculating power and a string feedback form for the system\cite{Backstepping}.Other implementation that proved quite succesfull where sliding mode\cite{Sliding Mode}, nonlinear model predictive\cite{Nonlinear Model Predictive}, adaptive tehniques\cite{Adaptive} or even fuzzy logic or neural networks\cite{Fuzzy}\cite{NN}. 
+
+\par
+There has been a strong trend to automate flight in the recent years in
+both military and civil fields, as presented in {{\cite{lessons}}}, we can see
+that the market for low computational power solutions is still wide open. While
+studies like {{\cite{Gain_Scheduled}}} and {{\cite{UTC}}} do a great job for
+solving the problem of autonomous flight, using different control structures,
+they both rely heavily on a ground station with a high degree of computational
+power available. This is a very common, but this study aims to develop a low
+power controller, placed on board of the aircraft, yielding similar results.
+\subsection{Scope of this research}
 This research proposes a control strategy for a small aircraft flying in windy
 conditions, with a lack of weather sensors, based on a linear Gaussian control
 and using an estimator to make up for the lack of sensors. It will walk through
@@ -46,16 +64,7 @@ all the necessary information for conducting a similar research in order to
 compare results between approaches when different parameters are taken into
 consideration. It will try to prove the strategy by simulating the aircraft in
 windy conditions and giving it a path to follow.
-\par
-While there has been a strong trend to automate flight in the recent years in
-both military and civil fields, as presented in {{\cite{lessons}}}, we can see
-that the market for low computational power solutions is still wide open. While
-studies like {{\cite{Gain_Scheduled}}} and {{\cite{UTC}}} do a great job for
-solving the problem of autonomous flight, using different control structures,
-they both rely heavily on a ground station with a high degree of computational
-power available. This is a very common, but this study aims to develop a low
-power controller, placed on board of the aircraft, yielding similar results.
-\par
+\subsection{Paper strucutre}
 This study is divided into 8 sections. The first section is the Introduction,
 while the second section focuses on the frames of reference used when
 developing the dynamic model of our system. The third and forth chapters focus
@@ -1116,13 +1125,7 @@ Because the terms $(1,1)$,$(2,3)$ and $(3,2)$ are the dominant members on they'r
 \end{align}
 Which also respects the intuitive answer that the forward velocity of the aircraft is directly controller by the thrust input, the lateral velocity of the aircraft is mainly influenced by the rudder and that the vertical velocity of the aircraft is mainly controller by the elevator.
 Since our aircraft is always expected to move forward we can even ignore the first row of our matrix and only develop 2 controllers for our lateral and vertical movements.
-
-%%%        S  S    E  E E        C     T T T T T    0       O       N        N
-%%%     S          E           C           T        I     O   O     N  N     N
-%%%        S       E  E E    C             T        I   O       O   N    N   N
-%%%           S    E           C           T        I     O   O     N      N N
-%%%     S S        E  E  E       C         T        I       O       N        N
-\section{Conclusion}
+\par
 After decoupling our system we can finally apply our complete control a
 structure on top of the non-linear model in Simulink to see the results. After
 making the connections from our control structure to our model we can simulate
@@ -1142,87 +1145,74 @@ In the figure {\ref{fig:SIMULINK8}} the reference trajectory is displayed in a 3
 Both examples follow a trajectory mainly emphasizing lateral and vertical movement relative to the starting orientation.
 This has been chosen because of the limitations of our implementation.
 
-%%%        S  S   U       U  B B       S  S    E  E E        C     T T T T T    0       O       N        N
-%%%     S         U       U  B   B    S        E           C           T        I     O   O     N  N     N
-%%%        S      U       U  B B        S      E  E E    C             T        I   O       O   N    N   N
-%%%           S     U   U    B   B        S    E           C           T        I     O   O     N      N N
-%%%     S S           U      B B      S S      E  E  E       C         T        I       O       N        N
-\subsection*{Achievements}
-In this paper the groundwork for the development of an aircraft controller has
-been developed using an optimal control approach and two proportional
-integrating controllers. This approach has been developed with the scope of a
-small-scale aircraft with limited computational resources which is expected to
-have an automated guidance system onboard. It takes into account the size
-limitations and proposes an efficient algorithm sufficient for basic cruise
-control.
 
-%%%        S  S   U       U  B B       S  S    E  E E        C     T T T T T    0       O       N        N
-%%%     S         U       U  B   B    S        E           C           T        I     O   O     N  N     N
-%%%        S      U       U  B B        S      E  E E    C             T        I   O       O   N    N   N
-%%%           S     U   U    B   B        S    E           C           T        I     O   O     N      N N
-%%%     S S           U      B B      S S      E  E  E       C         T        I       O       N        N
-\subsection*{Further development}
-In the future this approach could be extended to allow for fully autonomous
-aircraft with the ability to perform complex areal maneuvers and be able to
-land and take off safely. For this the before mentioned gain-scheduled
-architecture could be used, together with a performant mission planner and more
-efficient sensors for better data acquisition.
-\begin{thebibliography}{20}
-    \bibitem{state_estimation}
-    \newblock{Thijs Devos, Matteo Kirchner, Jan Croes, Wim Desmet and Frank Naets}
-    \newblock{Sensor Selection and State Estimation for Unobservable and Non-Linear System Models}
-    \bibitem{Field_Path_Following_for_Miniature_Air_vehicles}
-    Derek R. Nelson, BlakeBarber, Timothy W. McLain,
-    \newblock{Randal W. Beard}
-    \newblock{Vector Field Path Following for Miniature Air vehicles}
-    \bibitem{Nonlinear_and_Adaptive_Control_Design}
-    \newblock{M. Krstic, I. Kanellakopoulosand }
-    \newblock{P. V. Kokotovic,}
-    \newblock{\emph{Nonlinear and Adaptive Control Design}, John Wiley and Sons}
-    \newblock{NewYork,1995.}
-    \bibitem{Dynamics_of_Atmospheric_Flight}
-    Bernard Etkin, Dynamics of Atmospheric Flight,1972.
+%%%        S  S    E  E E        C     T T T T T    0       O       N        N
+%%%     S          E           C           T        I     O   O     N  N     N
+%%%        S       E  E E    C             T        I   O       O   N    N   N
+%%%           S    E           C           T        I     O   O     N      N N
+%%%     S S        E  E  E       C         T        I       O       N        N
+\section{Conclusion}
+This paper shows all the steps necessary dfor defining the mathematical model of an aircraft in a windy atmosphere. It also goes trough the process of choosing and implementing a suitable control strategy while proposing a LQC as a starting point for more performant approaches. The proposed controll law ensures cruise flight even under strong side-winds while being portable enough to be implemented even on the smallest contorllers.
+\par
+The proposed solution allows for a fully onboard contrller even for smallscale low budget aircraft that don't have access to expensive equipment. While a linear quadtratic controller seems sufficient for cruise flight it seems insufficient for absolute autonomy. To surpass this issue while keeping a low cost the authors propose a gain-scheduling implementation based on the same mathematical model but adjusted for the other phases of flight.
 
-    \bibitem{Aircraft_Control_and_Simulation}
-    Brian L.
-    Stevens and Frank L.
-    Lewis, \emph{Aircraft Control and Simulation},2003.
-    \bibitem{Equations_of_Motion}
-    John W.
-    Lincoln, Structures Division, Directorate of Flight Systems Engineering, \emph{Aircraft landing dynamic analysis} AD-A240 123
-    \bibitem{Karman}
-    de Karman, Theodore; Leslie Howarth (1938).
-    \emph{On the Statistical Theory of Isotropic Turbulence}
-    \bibitem{Gust}
-    Diedrich, Franklin W.; Joseph A.
-    Drischler (1957).
-    \emph{Effect of Span wise Variations in Gust Intensity on the Lift Due to Atmospheric Turbulence}: NACA TN 3920.
-    \bibitem{Wind_Sheer}
-    Adrian F.
-    Tuck \emph{Turbulence: Vertical Shear of the Horizontal Wind, Jet Streams, Symmetry Breaking, Scale Invariance and Gibbs Free Energy}
-    \bibitem{Wind_speed}
-    Michael Borsche, Andrea K.
-    Kaiser-Weiss, and Frank Kaspar, \emph{Wind speed variability between 10 and 116 m height from the regional reanalysis COSMO-REA6 compared to wind mast measurements over Northern Germany and the Netherlands}
-    \bibitem{51}
-    J. Abzugand E. E. Larrabee, \emph{Airplane Stability and Control: A History of the Technologies that Made Aviation Possible}, Cambridge University Press,2002.
-    \bibitem{Wind_profiles}
-    Pryian Mendis, Tuan Duc Ngo, N.
-    Haritos and Bijan Samali, \emph{Wind loading on tall buildings}, Electronic Journal of Structural Engineering · January 2007
-    \bibitem{UTC}
-    \newblock{Cornel-Alexandru Brezoescu}
-    \newblock{\emph{Small lightweight aircraft navigation in the presence of wind}}
-    \newblock{Université de Technologie de Compiègne}
-    \newblock{2013. English.}
-    NNT:2013 COMP 2105
-    \bibitem[]{Gain_Scheduled}
-    \newblock{Johannes Stephan and Walter Fichter }
-    \newblock{Gain-Scheduled Multivariable Flight Control under Uncertain Trim Conditions}
-    \newblock{Institute of Flight Mechanics and Control, University of Stuttgart, Germany}
-    \bibitem{lessons}
-    \newblock{Tor Erik Evjemo and S.}
-    O. Johnsen
-    \newblock{SINTEF, Trondheim, Norway.}
-    E-mail: Torerik.evjemo@sintef.no
-    \newblock{Lessons Learned from Increased Automation in Aviation: The Paradox Related to the High Degree of Safety and Implications for Future Research}
+
+\section*{References}
+
+\begin{thebibliography}{00}
+
+\bibitem{Linear}Poksawat P, Wang L, Mohamed A (2017) \emph{Gain scheduled attitude control of fixed-wing UAV
+with automatic controller tuning.}
+
+\bibitem{Nonlinear Model Predictive}Yang K, Kang Y, Sukkarieh S (2013) \emph{Adaptive nonlinear model predictive path-following
+control for a fixed-wing unmanned aerial vehicle.}
+
+\bibitem{Backstepping}Espinoza T, Dzul AE, Lozano R, Parada P (2014) \emph{Backstepping-sliding mode controllers
+applied to a fixed-wing UAV.}
+
+\bibitem{Adaptive}Ioannou PA, Sun J (2010) \emph{Robust adaptive control.}
+
+\bibitem{NN}Lee T, Kim Y (2001)  \emph{Nonlinear adaptive flight control using backstepping and neural networks}
+
+\bibitem{Fuzzy}Kayacan E, Khanesar MA, Rubio-Hervas J, Reyhanoglu M (2017) \emph{Learning control of fixed-
+wing unmanned aerial vehicles using fuzzy neural networks.}
+
+\bibitem{A full controller for a fixed-wing UAV}Gerardo Flores, Alejandro Flores and Andrés Montes de Oca:\emph{A full controller for a fixed-wing UAV},https://www.researchgate.net/publication/331639165
+
+\bibitem{Optimal Path Following for Small Fixed-Wing UAVs Under Wind Disturbances}Jun Yang,  Cunjia Liu, Matthew Coombes,Yunda Yan,  and Wen-Hua Chen|:\emph{ptimal Path Following for Small Fixed-Wing UAVs Under Wind Disturbances},IEEE TRANSACTIONS ON CONTROL SYSTEMS TECHNOLOGY, VOL. 29, NO. 3, MAY 2021, 10.1109/TCST.2020.2980727
+
+\bibitem{Electric aviation: A review of concepts and enabling technologies}Bright Appiah Adu-Gyamfi,Clara Good,\emph{Electric aviation: A review of concepts and enabling technologies},Transportation Engineering 9 (2022), 100134
+
+\bibitem{state_estimation}Thijs Devos, Matteo Kirchner, Jan Croes, Wim Desmet and Frank Naets:\emph{Sensor Selection and State Estimation for Unobservable and Non-Linear System Models}
+
+\bibitem{Field_Path_Following_for_Miniature_Air_vehicles}Derek R. Nelson, BlakeBarber, Timothy W. McLain,Randal W. Beard:\emph{Vector Field Path Following for Miniature Air vehicles}
+
+\bibitem{Nonlinear_and_Adaptive_Control_Design}M. Krstic, I. Kanellakopoulosand,P. V. Kokotovic:\emph{Nonlinear and Adaptive Control Design}
+
+\bibitem{Electric aircraft - present and futur} Andras Nagy:\emph{Electric aircraft - present and futur}University of Dunaujvaros, H-2400 Tancsics Mihaly utca 1, Hungary, ORCID ID: 0000-0002-5665-4324
+
+\bibitem{Aircraft_Control_and_Simulation}  Brian L, Stevens and Frank L,Lewis:\emph{Aircraft Control and Simulation} (2003).
+
+\bibitem{Equations_of_Motion}John W, Lincoln, Structures Division, Directorate of Flight Systems Engineering: \emph{Aircraft landing dynamic analysis}, AD-A240 123
+
+\bibitem{Karman} Karman, Theodore; Leslie Howarth:\emph{On the Statistical Theory of Isotropic Turbulence}
+
+\bibitem{Gust} Diedrich, Franklin W.; Joseph A. Drischler:\emph{Effect of Span wise Variations in Gust Intensity on the Lift Due to Atmospheric Turbulence},NACA TN 3920.
+
+\bibitem{Wind_Sheer} Adrian F.Tuck \emph{Turbulence: Vertical Shear of the Horizontal Wind, Jet Streams, Symmetry Breaking, Scale Invariance and Gibbs Free Energy}
+
+\bibitem{Wind_profiles}   Michael Borsche, Andrea K. Kaiser-Weiss, and Frank Kaspar:\emph{WWind speed variability between 10 and 116 m height from the regional reanalysis COSMO-REA6 compared to wind mast measurements over Northern Germany and the Netherlands}
+
+\bibitem{51}   J. Abzugand E. E. Larrabee:\emph{WAirplane Stability and Control: A History of the Technologies that Made Aviation Possible},Cambridge University Press,2002.
+
+\bibitem{Wind_profiles}  Pryian Mendis, Tuan Duc Ngo, N.
+Haritos and Bijan Samali:\emph{Wind loading on tall buildings},Electronic Journal of Structural Engineering · January 2007
+
+\bibitem{UTC} Cornel-Alexandru Brezoescu:\emph{GSmall lightweight aircraft navigation in the presence of wind},Université de Technologie de Compiègne
+
+\bibitem{Gain_Scheduled} Johannes Stephan and Walter Fichter:\emph{Gain-Scheduled Multivariable Flight Control under Uncertain Trim Conditions},Institute of Flight Mechanics and Control, University of Stuttgart, Germany
+
+\bibitem{lessons} Tor Erik Evjemo and S.SINTEF:\emph{Lessons Learned from Increased Automation in Aviation: The Paradox Related to the High Degree of Safety and Implications for Future Research}
 \end{thebibliography}
+\vspace{12pt}
 \end{document}
